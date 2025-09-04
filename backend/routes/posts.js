@@ -2,10 +2,18 @@ const express = require('express');
 const multer = require('multer');
 const sharp = require('sharp');
 const path = require('path');
+const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 const db = require('../config/database');
 
 const router = express.Router();
+
+// アップロードディレクトリを確保
+const uploadsDir = path.join(__dirname, '..', 'uploads', 'images');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+  console.log('Created uploads directory:', uploadsDir);
+}
 
 // 画像アップロード設定
 const storage = multer.memoryStorage();
@@ -24,6 +32,9 @@ const upload = multer({
 // 投稿作成
 router.post('/', upload.single('image'), async (req, res) => {
   try {
+    console.log('POST /posts - Request body:', req.body);
+    console.log('POST /posts - File:', req.file ? 'Present' : 'None');
+    
     const { title, description, latitude, longitude, nickname } = req.body;
     
     let imagePath = null;
@@ -31,21 +42,30 @@ router.post('/', upload.single('image'), async (req, res) => {
     if (req.file) {
       const filename = `${Date.now()}_${uuidv4()}.jpg`;
       imagePath = `uploads/images/${filename}`;
+      const fullPath = path.join(__dirname, '..', imagePath);
+      
+      console.log('Saving image to:', fullPath);
       
       await sharp(req.file.buffer)
         .resize(800, 600, { fit: 'inside' })
         .jpeg({ quality: 80 })
-        .toFile(path.join(__dirname, '..', imagePath));
+        .toFile(fullPath);
+        
+      console.log('Image saved successfully');
     }
+    
+    console.log('Inserting to database:', { title, description, latitude, longitude, imagePath, nickname });
     
     const result = await db.query(
       'INSERT INTO posts (title, description, latitude, longitude, image_path, nickname) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
       [title, description, latitude, longitude, imagePath, nickname || 'Anonymous']
     );
     
+    console.log('Database insert successful:', result.rows[0]);
     res.status(201).json(result.rows[0]);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    console.error('POST /posts error:', error);
+    res.status(400).json({ error: error.message, stack: error.stack });
   }
 });
 
