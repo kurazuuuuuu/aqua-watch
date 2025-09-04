@@ -4,6 +4,11 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 COPY . .
+
+# Build argument for Google Maps API key
+ARG REACT_APP_GOOGLE_MAPS_API_KEY
+ENV REACT_APP_GOOGLE_MAPS_API_KEY=$REACT_APP_GOOGLE_MAPS_API_KEY
+
 RUN npm run build
 
 FROM nginx:alpine

@@ -1,9 +1,8 @@
 import axios from 'axios';
-
-const API_BASE_URL = 'http://localhost:11101/api';
+import { getApiBaseUrl } from '../utils/config';
 
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: getApiBaseUrl(),
 });
 
 export const getPosts = async () => {

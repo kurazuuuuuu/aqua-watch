@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getPosts } from '../services/api';
+import { getBaseUrl } from '../utils/config';
 
 interface Post {
   id: number;
@@ -69,7 +70,7 @@ const Timeline: React.FC<TimelineProps> = ({ onPostSelect }) => {
               )}
               {post.image_path && (
                 <img 
-                  src={`http://localhost:11101/${post.image_path}`} 
+                  src={`${getBaseUrl()}/${post.image_path}`} 
                   alt={post.title}
                   className="timeline-image"
                 />

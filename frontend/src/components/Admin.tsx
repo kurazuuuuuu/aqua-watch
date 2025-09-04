@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { getPosts } from '../services/api';
 import { verifyAuth, logout, getGitHubAuthUrl } from '../services/auth';
+import { getBaseUrl } from '../utils/config';
 
 interface Post {
   id: number;
@@ -233,7 +234,7 @@ const Admin: React.FC = () => {
                     <div className="detail-item full-width">
                       <label>画像:</label>
                       <img 
-                        src={`http://localhost:11101/${selectedPost.image_path}`}
+                        src={`${getBaseUrl()}/${selectedPost.image_path}`}
                         alt={selectedPost.title}
                         className="detail-image"
                       />
