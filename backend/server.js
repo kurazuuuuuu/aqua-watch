@@ -14,7 +14,10 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 app.use(performanceMonitor);
 app.use(cors({
-  origin: 'http://localhost:11100',
+  origin: [
+    'http://localhost:11100',
+    'https://aqua-watch.krz-tech.net'
+  ],
   credentials: true
 }));
 app.use(express.json());
