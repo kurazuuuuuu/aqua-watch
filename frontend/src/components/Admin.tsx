@@ -72,14 +72,24 @@ const Admin: React.FC = () => {
   };
 
   const getLocationString = (lat: number, lng: number) => {
-    const latNum = typeof lat === 'number' ? lat : parseFloat(lat);
-    const lngNum = typeof lng === 'number' ? lng : parseFloat(lng);
-    
-    if (isNaN(latNum) || isNaN(lngNum)) {
-      return '座標不明';
+    try {
+      console.log('Processing coordinates:', { lat, lng, latType: typeof lat, lngType: typeof lng });
+      
+      const latNum = typeof lat === 'number' ? lat : parseFloat(lat);
+      const lngNum = typeof lng === 'number' ? lng : parseFloat(lng);
+      
+      console.log('Converted coordinates:', { latNum, lngNum });
+      
+      if (isNaN(latNum) || isNaN(lngNum)) {
+        console.warn('Invalid coordinates detected:', { lat, lng });
+        return '座標不明';
+      }
+      
+      return `${latNum.toFixed(6)}, ${lngNum.toFixed(6)}`;
+    } catch (error) {
+      console.error('Error in getLocationString:', error, { lat, lng });
+      return '座標エラー';
     }
-    
-    return `${latNum.toFixed(6)}, ${lngNum.toFixed(6)}`;
   };
 
   if (authLoading) {
@@ -161,32 +171,44 @@ const Admin: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {posts.map((post) => (
-                  <tr key={post.id}>
-                    <td>{post.id}</td>
-                    <td className="title-cell">{post.title}</td>
-                    <td>{post.nickname}</td>
-                    <td className="location-cell">
-                      {getLocationString(post.latitude, post.longitude)}
-                    </td>
-                    <td>{formatDate(post.created_at)}</td>
-                    <td>
-                      {post.image_path ? (
-                        <span className="has-image">📷 あり</span>
-                      ) : (
-                        <span className="no-image">❌ なし</span>
-                      )}
-                    </td>
-                    <td>
-                      <button 
-                        className="detail-btn"
-                        onClick={() => setSelectedPost(post)}
-                      >
-                        詳細
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {posts.map((post) => {
+                  try {
+                    console.log('Rendering post:', post);
+                    return (
+                      <tr key={post.id}>
+                        <td>{post.id}</td>
+                        <td className="title-cell">{post.title}</td>
+                        <td>{post.nickname}</td>
+                        <td className="location-cell">
+                          {getLocationString(post.latitude, post.longitude)}
+                        </td>
+                        <td>{formatDate(post.created_at)}</td>
+                        <td>
+                          {post.image_path ? (
+                            <span className="has-image">📷 あり</span>
+                          ) : (
+                            <span className="no-image">❌ なし</span>
+                          )}
+                        </td>
+                        <td>
+                          <button 
+                            className="detail-btn"
+                            onClick={() => setSelectedPost(post)}
+                          >
+                            詳細
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  } catch (error) {
+                    console.error('Error rendering post:', error, post);
+                    return (
+                      <tr key={post.id || 'error'}>
+                        <td colSpan={7}>投稿の表示でエラーが発生しました</td>
+                      </tr>
+                    );
+                  }
+                })}
               </tbody>
             </table>
           </div>
