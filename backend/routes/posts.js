@@ -56,9 +56,20 @@ router.post('/', upload.single('image'), async (req, res) => {
     
     console.log('Inserting to database:', { title, description, latitude, longitude, imagePath, nickname });
     
+    // latitude と longitude を数値に変換
+    const lat = parseFloat(latitude);
+    const lng = parseFloat(longitude);
+    
+    // 数値変換の検証
+    if (isNaN(lat) || isNaN(lng)) {
+      throw new Error(`Invalid coordinates: latitude=${latitude}, longitude=${longitude}`);
+    }
+    
+    console.log('Converted coordinates:', { lat, lng });
+    
     const result = await db.query(
       'INSERT INTO posts (title, description, latitude, longitude, image_path, nickname) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-      [title, description, latitude, longitude, imagePath, nickname || 'Anonymous']
+      [title, description, lat, lng, imagePath, nickname || 'Anonymous']
     );
     
     console.log('Database insert successful:', result.rows[0]);
@@ -75,7 +86,15 @@ router.get('/', async (req, res) => {
     const result = await db.query(
       'SELECT * FROM posts ORDER BY created_at DESC'
     );
-    res.json(result.rows);
+    
+    // latitude と longitude を確実に数値として返す
+    const posts = result.rows.map(post => ({
+      ...post,
+      latitude: parseFloat(post.latitude),
+      longitude: parseFloat(post.longitude)
+    }));
+    
+    res.json(posts);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
