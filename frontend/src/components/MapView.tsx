@@ -176,7 +176,7 @@ const MapView: React.FC<MapViewProps> = ({ selectedPost }) => {
                     
                     {post.image_path && (
                       <img 
-                        src={`http://localhost:5001/${post.image_path}`} 
+                        src={`http://localhost:11101/${post.image_path}`} 
                         alt={post.title}
                         style={{ 
                           width: '100%',

@@ -233,7 +233,7 @@ const Admin: React.FC = () => {
                     <div className="detail-item full-width">
                       <label>画像:</label>
                       <img 
-                        src={`http://localhost:5001/${selectedPost.image_path}`}
+                        src={`http://localhost:11101/${selectedPost.image_path}`}
                         alt={selectedPost.title}
                         className="detail-image"
                       />

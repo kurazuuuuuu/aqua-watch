@@ -69,7 +69,7 @@ const Timeline: React.FC<TimelineProps> = ({ onPostSelect }) => {
               )}
               {post.image_path && (
                 <img 
-                  src={`http://localhost:5001/${post.image_path}`} 
+                  src={`http://localhost:11101/${post.image_path}`} 
                   alt={post.title}
                   className="timeline-image"
                 />

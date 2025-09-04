@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:5001/api/auth';
+const API_BASE_URL = 'http://localhost:11101/api/auth';
 
 const authApi = axios.create({
   baseURL: API_BASE_URL,
@@ -26,5 +26,5 @@ export const logout = async () => {
 };
 
 export const getGitHubAuthUrl = () => {
-  return 'http://localhost:5001/api/auth/github';
+  return 'http://localhost:11101/api/auth/github';
 };
