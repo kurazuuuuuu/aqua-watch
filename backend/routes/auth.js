@@ -64,16 +64,39 @@ router.get('/github/callback', async (req, res) => {
     // Organization メンバーシップを確認
     let isOrgMember = false;
     try {
-      const orgResponse = await axios.get('https://api.github.com/orgs/Krz-Tech/members/' + user.login, {
+      // パブリックメンバーシップを確認
+      const orgResponse = await axios.get(`https://api.github.com/orgs/Krz-Tech/public_members/${user.login}`, {
         headers: {
           'Authorization': `token ${accessToken}`,
+          'Accept': 'application/vnd.github.v3+json'
         },
       });
       isOrgMember = orgResponse.status === 204;
     } catch (error) {
-      console.log('Organization membership check failed:', error.response?.status);
-      isOrgMember = false;
+      console.log('Public membership check failed, trying user orgs:', error.response?.status);
+      
+      // パブリックメンバーシップが見つからない場合、ユーザーの所属組織を確認
+      try {
+        const userOrgsResponse = await axios.get('https://api.github.com/user/orgs', {
+          headers: {
+            'Authorization': `token ${accessToken}`,
+            'Accept': 'application/vnd.github.v3+json'
+          },
+        });
+        
+        isOrgMember = userOrgsResponse.data.some(org => org.login === 'Krz-Tech');
+        console.log('User organizations check:', isOrgMember);
+      } catch (orgError) {
+        console.log('User orgs check failed:', orgError.response?.status);
+        isOrgMember = false;
+      }
     }
+    
+    console.log('User authenticated:', {
+      login: user.login,
+      name: user.name,
+      isOrgMember: isOrgMember
+    });
     
     // JWTトークンを生成
     const token = jwt.sign(

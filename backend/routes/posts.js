@@ -28,6 +28,12 @@ const authenticateToken = (req, res, next) => {
 
 // Organization メンバーチェック
 const requireOrgMember = (req, res, next) => {
+  // 開発環境では組織チェックをスキップ
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('Development mode: skipping organization check');
+    return next();
+  }
+  
   if (!req.user.is_org_member) {
     return res.status(403).json({ error: 'Organization membership required' });
   }
