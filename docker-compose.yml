@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - aqua-network
+
+  backend:
+    build: ./backend
+    ports:
+      - "5001:5000"
+    environment:
+      - DATABASE_URL=postgresql://aqua_user:aqua_pass@postgres:5432/aqua_watch
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=your_jwt_secret_here
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - image_uploads:/app/uploads
+    networks:
+      - aqua-network
+
+  ai-service:
+    build: ./ai-service
+    ports:
+      - "8000:8000"
+    volumes:
+      - image_uploads:/app/uploads
+    networks:
+      - aqua-network
+
+  postgres:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=aqua_watch
+      - POSTGRES_USER=aqua_user
+      - POSTGRES_PASSWORD=aqua_pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - aqua-network
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - aqua-network
+
+volumes:
+  postgres_data:
+  redis_data:
+  image_uploads:
+
+networks:
+  aqua-network:
+    driver: bridge
