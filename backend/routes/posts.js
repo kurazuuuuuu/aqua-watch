@@ -4,9 +4,35 @@ const sharp = require('sharp');
 const path = require('path');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
+const jwt = require('jsonwebtoken');
 const db = require('../config/database');
 
 const router = express.Router();
+
+// 認証ミドルウェア
+const authenticateToken = (req, res, next) => {
+  const token = req.cookies.admin_token;
+  
+  if (!token) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+  
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (error) {
+    return res.status(401).json({ error: 'Invalid token' });
+  }
+};
+
+// Organization メンバーチェック
+const requireOrgMember = (req, res, next) => {
+  if (!req.user.is_org_member) {
+    return res.status(403).json({ error: 'Organization membership required' });
+  }
+  next();
+};
 
 // アップロードディレクトリを確保
 const uploadsDir = path.join(__dirname, '..', 'uploads', 'images');
@@ -29,8 +55,8 @@ const upload = multer({
   }
 });
 
-// 投稿作成
-router.post('/', upload.single('image'), async (req, res) => {
+// 投稿作成（認証必須）
+router.post('/', authenticateToken, upload.single('image'), async (req, res) => {
   try {
     console.log('POST /posts - Request body:', req.body);
     console.log('POST /posts - File:', req.file ? 'Present' : 'None');
@@ -69,7 +95,7 @@ router.post('/', upload.single('image'), async (req, res) => {
     
     const result = await db.query(
       'INSERT INTO posts (title, description, latitude, longitude, image_path, nickname) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-      [title, description, lat, lng, imagePath, nickname || 'Anonymous']
+      [title, description, lat, lng, imagePath, req.user.name || req.user.login || 'Anonymous']
     );
     
     console.log('Database insert successful:', result.rows[0]);
@@ -80,11 +106,31 @@ router.post('/', upload.single('image'), async (req, res) => {
   }
 });
 
-// 投稿一覧取得
-router.get('/', async (req, res) => {
+// 投稿一覧取得（管理者用 - Organization メンバー限定）
+router.get('/admin', authenticateToken, requireOrgMember, async (req, res) => {
   try {
     const result = await db.query(
       'SELECT * FROM posts ORDER BY created_at DESC'
+    );
+    
+    // latitude と longitude を確実に数値として返す
+    const posts = result.rows.map(post => ({
+      ...post,
+      latitude: parseFloat(post.latitude),
+      longitude: parseFloat(post.longitude)
+    }));
+    
+    res.json(posts);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// 投稿一覧取得（公開用 - マップ表示用）
+router.get('/', async (req, res) => {
+  try {
+    const result = await db.query(
+      'SELECT id, title, description, latitude, longitude, image_path, nickname, created_at FROM posts ORDER BY created_at DESC'
     );
     
     // latitude と longitude を確実に数値として返す

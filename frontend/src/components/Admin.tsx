@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { getPosts } from '../services/api';
 import { verifyAuth, logout, getGitHubAuthUrl } from '../services/auth';
-import { getBaseUrl } from '../utils/config';
+import { getBaseUrl, getApiBaseUrl } from '../utils/config';
 
 interface Post {
   id: number;
@@ -21,6 +21,7 @@ interface User {
   login: string;
   name: string;
   avatar_url: string;
+  accessDenied?: boolean;
 }
 
 const Admin: React.FC = () => {
@@ -48,10 +49,24 @@ const Admin: React.FC = () => {
 
   const fetchPosts = async () => {
     try {
-      const data = await getPosts();
+      const response = await fetch(`${getApiBaseUrl()}/posts/admin`, {
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        if (response.status === 403) {
+          throw new Error('ORGANIZATION_ACCESS_DENIED');
+        }
+        throw new Error('Failed to fetch posts');
+      }
+      
+      const data = await response.json();
       setPosts(data);
     } catch (error) {
       console.error('投稿取得失敗:', error);
+      if (error instanceof Error && error.message === 'ORGANIZATION_ACCESS_DENIED' && user) {
+        setUser({ ...user, accessDenied: true });
+      }
     } finally {
       setLoading(false);
     }
@@ -91,6 +106,24 @@ const Admin: React.FC = () => {
       return '座標エラー';
     }
   };
+
+  if (user?.accessDenied) {
+    return (
+      <div className="admin-container">
+        <div className="access-denied">
+          <h2>🚫 アクセス拒否</h2>
+          <p>申し訳ございませんが、管理画面にアクセスするには Krz-Tech Organization のメンバーである必要があります。</p>
+          <div className="user-info">
+            <img src={user.avatar_url} alt={user.name} className="avatar" />
+            <p>ログイン中: {user.name || user.login}</p>
+          </div>
+          <button onClick={handleLogout} className="logout-btn">
+            ログアウト
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (authLoading) {
     return (

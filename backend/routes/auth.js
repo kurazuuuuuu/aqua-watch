@@ -61,13 +61,28 @@ router.get('/github/callback', async (req, res) => {
     
     const user = userResponse.data;
     
+    // Organization メンバーシップを確認
+    let isOrgMember = false;
+    try {
+      const orgResponse = await axios.get('https://api.github.com/orgs/Krz-Tech/members/' + user.login, {
+        headers: {
+          'Authorization': `token ${accessToken}`,
+        },
+      });
+      isOrgMember = orgResponse.status === 204;
+    } catch (error) {
+      console.log('Organization membership check failed:', error.response?.status);
+      isOrgMember = false;
+    }
+    
     // JWTトークンを生成
     const token = jwt.sign(
       { 
         id: user.id, 
         login: user.login, 
         name: user.name,
-        avatar_url: user.avatar_url 
+        avatar_url: user.avatar_url,
+        is_org_member: isOrgMember
       },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }

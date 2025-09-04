@@ -805,3 +805,54 @@ div[style*="margin-top: 10px"] {
     margin: 10px;
   }
 }
+/* User authentication styles */
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 16px;
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+}
+
+.access-denied {
+  text-align: center;
+  padding: 40px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  max-width: 500px;
+  margin: 40px auto;
+}
+
+.access-denied h2 {
+  color: #e74c3c;
+  margin-bottom: 16px;
+}
+
+.access-denied .avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  margin: 16px 0;
+}
+
+.logout-btn {
+  background: #e74c3c;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  margin-top: 16px;
+}
+
+.logout-btn:hover {
+  background: #c0392b;
+}
