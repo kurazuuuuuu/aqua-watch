@@ -72,7 +72,14 @@ const Admin: React.FC = () => {
   };
 
   const getLocationString = (lat: number, lng: number) => {
-    return `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+    const latNum = typeof lat === 'number' ? lat : parseFloat(lat);
+    const lngNum = typeof lng === 'number' ? lng : parseFloat(lng);
+    
+    if (isNaN(latNum) || isNaN(lngNum)) {
+      return '座標不明';
+    }
+    
+    return `${latNum.toFixed(6)}, ${lngNum.toFixed(6)}`;
   };
 
   if (authLoading) {
