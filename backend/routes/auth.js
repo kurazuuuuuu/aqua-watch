@@ -6,8 +6,20 @@ const router = express.Router();
 // GitHub OAuth認証開始
 router.get('/github', (req, res) => {
   const clientId = process.env.GITHUB_CLIENT_ID;
-  const redirectUri = `${req.protocol}://${req.get('host')}/api/auth/github/callback`;
+  
+  // 環境に応じてリダイレクトURIを設定
+  let redirectUri;
+  const host = req.get('host');
+  
+  if (host && host.includes('aqua-watch.krz-tech.net')) {
+    redirectUri = 'https://aqua-watch.krz-tech.net/api/auth/github/callback';
+  } else {
+    redirectUri = 'http://localhost:11101/api/auth/github/callback';
+  }
+  
   const scope = 'user:email';
+  
+  console.log('GitHub認証開始:', { host, redirectUri });
   
   const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}`;
   
@@ -62,9 +74,12 @@ router.get('/github/callback', async (req, res) => {
     );
     
     // トークンをクッキーに設定してリダイレクト
+    const isProduction = req.get('host') && req.get('host').includes('aqua-watch.krz-tech.net');
+    
     res.cookie('admin_token', token, { 
       httpOnly: true, 
-      secure: false, // 開発環境用
+      secure: isProduction, // プロダクションではHTTPS必須
+      sameSite: isProduction ? 'lax' : 'lax',
       maxAge: 24 * 60 * 60 * 1000 // 24時間
     });
     
