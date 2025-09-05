@@ -1,13 +1,8 @@
 services:
   frontend:
-    build: 
-      context: ./frontend
-      args:
-        - REACT_APP_GOOGLE_MAPS_API_KEY=${REACT_APP_GOOGLE_MAPS_API_KEY}
+    build: ./frontend
     ports:
       - "11100:80"
-    environment:
-      - REACT_APP_GOOGLE_MAPS_API_KEY=${REACT_APP_GOOGLE_MAPS_API_KEY}
     depends_on:
       - backend
     networks:
@@ -23,6 +18,7 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
       - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
+      - GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY}
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_NAME=${DB_NAME}

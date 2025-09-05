@@ -1,13 +1,8 @@
 services:
   frontend:
-    build: 
-      context: ./frontend
-      args:
-        - REACT_APP_GOOGLE_MAPS_API_KEY=${REACT_APP_GOOGLE_MAPS_API_KEY}
+    build: ./frontend
     ports:
       - "11110:80"
-    environment:
-      - REACT_APP_GOOGLE_MAPS_API_KEY=${REACT_APP_GOOGLE_MAPS_API_KEY}
     depends_on:
       - backend
     networks:
@@ -19,6 +14,7 @@ services:
       - "11111:5000"
     environment:
       - NODE_ENV=demo
+      - GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY}
     networks:
       - aqua-network
 
