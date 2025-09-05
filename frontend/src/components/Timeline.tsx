@@ -1,6 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { getPosts } from '../services/api';
-import { getBaseUrl } from '../utils/config';
 
 interface Post {
   id: number;
@@ -11,6 +9,7 @@ interface Post {
   image_path: string;
   nickname: string;
   created_at: string;
+  water_quality_score?: number;
 }
 
 interface TimelineProps {
@@ -21,18 +20,17 @@ const Timeline: React.FC<TimelineProps> = ({ onPostSelect }) => {
   const [posts, setPosts] = useState<Post[]>([]);
 
   useEffect(() => {
-    const fetchPosts = async () => {
+    const fetchDemoPosts = async () => {
       try {
-        const data = await getPosts();
+        const response = await fetch('/api/demo/posts');
+        const data = await response.json();
         setPosts(data);
       } catch (error) {
-        console.error('投稿取得失敗:', error);
+        console.error('デモ投稿取得失敗:', error);
       }
     };
 
-    fetchPosts();
-    const interval = setInterval(fetchPosts, 30000);
-    return () => clearInterval(interval);
+    fetchDemoPosts();
   }, []);
 
   const formatDate = (dateString: string) => {
@@ -49,15 +47,34 @@ const Timeline: React.FC<TimelineProps> = ({ onPostSelect }) => {
     return `${days}日前`;
   };
 
+  const getQualityColor = (score?: number) => {
+    if (!score) return '#gray';
+    if (score >= 80) return '#4CAF50';
+    if (score >= 70) return '#8BC34A';
+    if (score >= 60) return '#FFC107';
+    return '#FF5722';
+  };
+
+  const getQualityLabel = (score?: number) => {
+    if (!score) return '未測定';
+    if (score >= 80) return '良好';
+    if (score >= 70) return 'やや良好';
+    if (score >= 60) return '注意';
+    return '要改善';
+  };
+
   return (
     <div className="timeline">
-      <h3>最新の投稿</h3>
+      <h3>博多区 水質調査レポート</h3>
       <div className="timeline-list">
         {posts.map((post) => (
           <div 
             key={post.id} 
             className="timeline-item clickable"
-            onClick={() => onPostSelect(post)}
+            onClick={() => {
+              console.log('Timeline clicked post:', post.title, 'Coordinates:', post.latitude, post.longitude);
+              onPostSelect(post);
+            }}
           >
             <div className="timeline-content">
               <div className="timeline-header">
@@ -68,13 +85,17 @@ const Timeline: React.FC<TimelineProps> = ({ onPostSelect }) => {
               {post.description && (
                 <p className="timeline-description">{post.description}</p>
               )}
-              {post.image_path && (
-                <img 
-                  src={`${getBaseUrl()}/${post.image_path}`} 
-                  alt={post.title}
-                  className="timeline-image"
-                />
-              )}
+              <div className="water-quality-indicator">
+                <span 
+                  className="quality-score"
+                  style={{ backgroundColor: getQualityColor(post.water_quality_score) }}
+                >
+                  {post.water_quality_score || 0}点
+                </span>
+                <span className="quality-label">
+                  {getQualityLabel(post.water_quality_score)}
+                </span>
+              </div>
               <div className="click-hint">📍 クリックして地図で表示</div>
             </div>
           </div>
