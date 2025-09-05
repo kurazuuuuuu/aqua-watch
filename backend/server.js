@@ -7,6 +7,7 @@ require('dotenv').config();
 const postRoutes = require('./routes/posts');
 const authRoutes = require('./routes/auth');
 const demoRoutes = require('./routes/demo');
+const mapsRoutes = require('./routes/maps');
 const { performanceMonitor, errorHandler } = require('./middleware/monitoring');
 
 const app = express();
@@ -29,6 +30,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/posts', postRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/demo', demoRoutes);
+app.use('/api/maps', mapsRoutes);
 
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });

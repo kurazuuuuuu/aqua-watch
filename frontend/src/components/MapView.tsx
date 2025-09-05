@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { Wrapper, Status } from '@googlemaps/react-wrapper';
+import React, { useEffect, useState, useRef } from 'react';
+import { useGoogleMaps } from '../hooks/useGoogleMaps';
 
 interface Post {
   id: number;
@@ -17,17 +17,6 @@ interface MapViewProps {
   selectedPost?: Post | null;
 }
 
-const render = (status: Status) => {
-  switch (status) {
-    case Status.LOADING:
-      return <div>地図を読み込み中...</div>;
-    case Status.FAILURE:
-      return <div>地図の読み込みに失敗しました</div>;
-    case Status.SUCCESS:
-      return <div>地図を読み込み中...</div>;
-  }
-};
-
 interface GoogleMapProps {
   posts: Post[];
   selectedPost?: Post | null;
@@ -41,7 +30,6 @@ const GoogleMapComponent: React.FC<GoogleMapProps> = ({ posts, selectedPost }) =
 
   useEffect(() => {
     if (mapRef.current && !map) {
-      // コンテナサイズを確認
       const container = mapRef.current;
       console.log('Map container size:', {
         width: container.offsetWidth,
@@ -50,7 +38,6 @@ const GoogleMapComponent: React.FC<GoogleMapProps> = ({ posts, selectedPost }) =
         clientHeight: container.clientHeight
       });
       
-      // コンテナサイズが確定するまで少し待つ
       setTimeout(() => {
         if (mapRef.current) {
           console.log('Map container size after timeout:', {
@@ -58,7 +45,6 @@ const GoogleMapComponent: React.FC<GoogleMapProps> = ({ posts, selectedPost }) =
             height: mapRef.current.offsetHeight
           });
           
-          // 博多区中心部の座標
           const newMap = new google.maps.Map(mapRef.current, {
             center: { lat: 33.5904, lng: 130.4017 },
             zoom: 14,
@@ -67,7 +53,6 @@ const GoogleMapComponent: React.FC<GoogleMapProps> = ({ posts, selectedPost }) =
           setMap(newMap);
           setInfoWindow(new google.maps.InfoWindow());
           
-          // 地図が完全に読み込まれた後にリサイズ
           google.maps.event.addListenerOnce(newMap, 'idle', () => {
             google.maps.event.trigger(newMap, 'resize');
             newMap.setCenter({ lat: 33.5904, lng: 130.4017 });
@@ -85,15 +70,12 @@ const GoogleMapComponent: React.FC<GoogleMapProps> = ({ posts, selectedPost }) =
       console.log('Selected post:', selectedPost.title, 'Coordinates:', lat, lng);
       
       if (!isNaN(lat) && !isNaN(lng)) {
-        // 現在の地図中心を確認
         const currentCenter = map.getCenter();
         console.log('Current map center:', currentCenter?.lat(), currentCenter?.lng());
         
-        // 地図を移動
         map.panTo({ lat, lng });
         map.setZoom(17);
         
-        // 移動後の地図中心を確認
         setTimeout(() => {
           const newCenter = map.getCenter();
           if (newCenter) {
@@ -255,6 +237,7 @@ const GoogleMapComponent: React.FC<GoogleMapProps> = ({ posts, selectedPost }) =
 
 const MapView: React.FC<MapViewProps> = ({ selectedPost }) => {
   const [posts, setPosts] = useState<Post[]>([]);
+  const { isLoaded, loadError } = useGoogleMaps();
 
   useEffect(() => {
     const fetchDemoPosts = async () => {
@@ -271,9 +254,7 @@ const MapView: React.FC<MapViewProps> = ({ selectedPost }) => {
     fetchDemoPosts();
   }, []);
 
-  const apiKey = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
-  
-  if (!apiKey) {
+  if (loadError) {
     return (
       <div style={{ 
         height: '100%', 
@@ -283,18 +264,30 @@ const MapView: React.FC<MapViewProps> = ({ selectedPost }) => {
         color: '#d32f2f',
         fontSize: '16px'
       }}>
-        Google Maps APIキーが設定されていません
+        地図の読み込みに失敗しました: {loadError}
+      </div>
+    );
+  }
+
+  if (!isLoaded) {
+    return (
+      <div style={{ 
+        height: '100%', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        fontSize: '16px'
+      }}>
+        地図を読み込み中...
       </div>
     );
   }
 
   return (
-    <Wrapper apiKey={apiKey} render={render}>
-      <GoogleMapComponent 
-        posts={posts} 
-        selectedPost={selectedPost}
-      />
-    </Wrapper>
+    <GoogleMapComponent 
+      posts={posts} 
+      selectedPost={selectedPost}
+    />
   );
 };
 
